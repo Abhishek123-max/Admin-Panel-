@@ -1,6 +1,15 @@
+
 FROM node:18 AS builder
 
 WORKDIR /app
+
+
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
 COPY package*.json ./
 RUN npm install
@@ -15,7 +24,6 @@ FROM node:18-alpine
 WORKDIR /app
 
 RUN npm install -g serve
-
 
 COPY --from=builder /app/dist ./dist
 
