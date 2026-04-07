@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { Property, PropertyType } from '../types/property';
+
+const API_BASE_URL = "http://15.207.223.246:8000";
 
 export interface PropertyFilters {
   type?: PropertyType | '';
@@ -23,24 +24,17 @@ export function useProperties(filters: PropertyFilters = {}) {
     setLoading(true);
     setError(null);
     try {
-      let query = supabase
-        .from('properties')
-        .select('*, property_images(url, sort_order, caption)')
-        .eq('available', true)
-        .order('created_at', { ascending: false });
+      let url = `${API_BASE_URL}/properties?`;
 
-      if (filters.type) query = query.eq('type', filters.type);
-      if (filters.city) query = query.ilike('city', `%${filters.city}%`);
-      if (filters.minPrice) query = query.gte('price', filters.minPrice);
-      if (filters.maxPrice) query = query.lte('price', filters.maxPrice);
-      if (filters.search) {
-        query = query.or(
-          `title.ilike.%${filters.search}%,city.ilike.%${filters.search}%,address.ilike.%${filters.search}%`
-        );
-      }
+      if (filters.type) url += `type=${filters.type}&`;
+      if (filters.city) url += `city=${filters.city}&`;
+      if (filters.minPrice) url += `minPrice=${filters.minPrice}&`;
+      if (filters.maxPrice) url += `maxPrice=${filters.maxPrice}&`;
+      if (filters.search) url += `search=${filters.search}&`;
 
-      const { data, error: err } = await query;
-      if (err) throw err;
+      const res = await fetch(url);
+      const data = await res.json();
+
       setProperties(data || []);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load properties');
@@ -57,13 +51,9 @@ export function useFeaturedProperties() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from('properties')
-      .select('*, property_images(url, sort_order, caption)')
-      .eq('available', true)
-      .eq('featured', true)
-      .limit(6)
-      .then(({ data }) => {
+    fetch(`${API_BASE_URL}/properties?featured=true`)
+      .then(res => res.json())
+      .then(data => {
         setProperties(data || []);
         setLoading(false);
       });
@@ -79,19 +69,19 @@ export function useProperty(id: string) {
 
   useEffect(() => {
     if (!id) return;
+
     async function fetchProperty() {
       setLoading(true);
-      const { data, error: err } = await supabase
-        .from('properties')
-        .select('*, property_images(*), property_nearby_places(*)')
-        .eq('id', id)
-        .eq('available', true)
-        .maybeSingle();
-
-      if (err) setError(err.message);
-      else setProperty(data);
+      try {
+        const res = await fetch(`${API_BASE_URL}/properties/${id}`);
+        const data = await res.json();
+        setProperty(data);
+      } catch (err: any) {
+        setError(err.message);
+      }
       setLoading(false);
     }
+
     fetchProperty();
   }, [id]);
 
