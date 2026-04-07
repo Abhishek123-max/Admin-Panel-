@@ -1,6 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+const API_BASE_URL = "http://15.207.223.246:8000";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const addProperty = async (data: any) => {
+  const res = await fetch(`${API_BASE_URL}/add-property`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
