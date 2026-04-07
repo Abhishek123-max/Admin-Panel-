@@ -10,3 +10,6 @@ export const addProperty = async (data: any) => {
   });
   return res.json();
 };
+
+// Dummy export to satisfy old imports in AdminAuthContext.tsx
+export const supabase = {} as any;
